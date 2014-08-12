@@ -3,9 +3,9 @@
 # ----------------------- #
 
 url: http://yoursite.com
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+title: プロジェクト管理ツール&ldquo;LibrePlan&rdquo;
+subtitle: オープンソースのプロジェクト管理ツールLibrePlanのインストール，日本語化
+author: Hideto Yoshida
 simple_search: https://www.google.com/search
 description:
 

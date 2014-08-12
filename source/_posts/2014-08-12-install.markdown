@@ -1,0 +1,172 @@
+---
+layout: post
+title: "インストール"
+date: 2014-08-12 20:43:00 +0900
+comments: true
+categories: 
+---
+ソースの入手方法とインストール，ビルドから起動までの手順を紹介します。
+
+[Hacking]:http://www.libreplan.org/HACKING.html
+
+基本的なインストール作業は，ドキュメントの"[Hacking]"のページに紹介されています。
+
+このページには，インストール対象としていくつかのLinuxディストリビューションが紹介されていますが，
+バージョンの変更などの原因で記載内容が正しくないものもあるようです。
+
+以下の説明ではインストール対象を絞って説明したいと思いますが，
+他のディストリビューションを使用する場合でも，注意すべき点はほとんど同じです。
+
+##インストール環境の準備
+
+ここではディストリビューションとして，Hackingページでもdebianと並んで最初に紹介されていて，
+記述ミスも比較的少ない(開発で使用しているのではないかと思いますが) ubuntuを使用します。
+
+対象バージョンは明記されていませんが，大部分には対応可能と(たぶん)思います。私が使用したのは13.10です。
+
+入手はこちらから → [http://www.ubuntu.com/download](http://www.ubuntu.com/download)
+
+まず必要なパッケージをOSにインストールします。
+
+    # apt-get install git-core maven2 openjdk-6-jdk postgresql postgresql-client python-docutils make gettext cutycapt
+
+バージョンによっては，cutypartがインストールできないかも知れません。
+その場合は後でインストールすることにして，ここでは省略しておきます。
+
+データベースにMySQLを使う場合は，postgresql/postgresql-client の代わりにインストールしておきます。
+
+    # apt-get install mysql-server
+
+##データベースの設定
+
+ビルド処理ではデータベースを作ってくれないので，手作業で行わなければなりません。 
+これも"[Hacking]"の記述通りでＯＫのはずです。
+
+PostgreSQLを使うのであれば，rootで
+
+    # su postgres -c psql
+
+をやってサーバに接続した後，以下のSQLでデータベースとユーザを作成します。
+
+    CREATE DATABASE libreplandev;
+    CREATE DATABASE libreplandevtest;
+    CREATE USER libreplan WITH PASSWORD 'libreplan';
+    GRANT ALL PRIVILEGES ON DATABASE libreplandev TO libreplan;
+    GRANT ALL PRIVILEGES ON DATABASE libreplandevtest TO libreplan;
+
+MySQLなら
+
+    $ mysql -u root -p
+
+でパスワード(インストール時に指定したもの)を入力して接続します。
+
+    CREATE DATABASE libreplandev;
+    CREATE DATABASE libreplandevtest;
+    GRANT ALL ON libreplandev.* to 'libreplan'@'localhost' identified by 'libreplan';
+    GRANT ALL ON libreplandevtest.* to 'libreplan'@'localhost' identified by 'libreplan’;
+
+SQLコマンドを抜ければ，データベースの準備は終了です。
+
+##ソース入手とビルド
+
+gitで取得したソースをmaven2でビルドする，という手順です。
+
+    $ git clone http://github.com/Igalia/libreplan.git
+
+でリポジトリを取得します。
+
+"`libreplan`"というディレクトリができますので，そこでビルドを実行します。
+
+    $ cd libreplan
+    $ mvn clean install
+
+ですが，これで実行するとユニットテストが走って，結構な時間が掛かります。  
+しかも，ユニットテストが結構な頻度でフェールして，ビルドが中断したりします。
+
+特にテストに興味がなければ，以下のコマンドで省略するとよいでしょう。
+
+    $ mvn -DskipTests clean install
+
+デフォルトで使用されるデータベースはPostgreSQLです。  
+準備段階でMySQLを選択した場合は，次のビルドを実行してください。
+
+    $ mvn -Pdev,mysql clean install
+
+同じく，ユニットテストを省略するなら，次のように指定します。
+
+    $ mvn -DskipTests -Pdev,mysql clean install
+
+最近になってSpringフレームワークのバージョンが変更されているのですが，
+それによってビルド時にエラーが発生する場合があるようです(2014/5/M確認)。
+その場合，libreplan/ 直下のpom.xmlを次のように修正するとよいと思います。
+
+    --- ./pom.xml
+    +++ ./pom.xml
+    @@ -230,6 +230,12 @@
+     <version>4.0.3.RELEASE</version>
+     </dependency>
+     
+    +<dependency>
+    + <groupId>org.springframework</groupId>
+    + <artifactId>spring-tx</artifactId>
+    + <version>4.0.3.RELEASE</version>
+    +</dependency>
+    +
+     <dependency>
+     <groupId>org.hibernate</groupId>
+     <artifactId>hibernate-core</artifactId>
+
+##CutyPartのインストール
+
+前述のCutyPartが取得できなければ，ソースを直接持ってきてビルドします。
+
+    # apt-get install subversion libqt4-dev libwebkit-dev qt4-qmake g++ make
+    # svn co 'https://svn.code.sf.net/p/cutycapt/code/CutyCapt'
+    
+    $ cd CutyPart
+    $ qmake CutyPart.pro
+
+取得したソース(2014/5)ではここでビルドエラーが出たので，一部修正が必要でした。
+
+    --- CutyCapt/CutyCapt.cpp 2014-05-15 17:45:08.583174491 +0900
+    +++ CutyCapt.new/CutyCapt.cpp 2014-05-15 11:33:44.034940122 +0900
+    @@ -36,6 +36,7 @@
+    #include <QByteArray>
+    #include <QNetworkRequest>
+    #include <QNetworkProxy>
+    +#include <QNetworkReply>
+    #include "CutyCapt.hpp"
+    
+    #if QT_VERSION >= 0x040600 && 0
+    --- CutyCapt/CutyCapt.hpp 2014-05-15 17:45:08.583174491 +0900
+    +++ CutyCapt.new/CutyCapt.hpp 2014-05-15 11:34:34.446940652 +0900
+    @@ -1,3 +1,4 @@
+    +#include <QSslError>
+    #include <QtWebKit>
+    
+    #if QT_VERSION >= 0x050000
+
+この修正をした上で，
+
+    $ make
+    $ sudo cp CutyPart /usr/bin/cutypart
+
+でインストールできました。
+
+##実行
+
+ビルドが終了したら，アプリケーションサーバ(Jetty)を起動します。  
+先ほどと同じく，ユニットテストは省略しておきます。
+
+    $ cd libreplan-webapp
+    $ mvn -DskipTests jetty:run
+
+MySQLの場合は，前回と同じくオプションを指定しておきます。
+
+    $ mvn -DskipTests -Pdev,mysql jetty:run
+
+少し時間が掛かって起動したら，ブラウザから http://localhost:8080/libreplan-webapp に接続します。  
+ログイン画面が表示されたら，admin/admin (初期状態) でログインすれば，最初の画面が表示されるはずです。
+
+
+
