@@ -3,7 +3,7 @@ layout: post
 title: "インストール"
 date: 2014-08-12 20:43:00 +0900
 comments: true
-categories: 
+categories: 導入編
 ---
 ソースの入手方法とインストール，ビルドから起動までの手順を紹介します。
 

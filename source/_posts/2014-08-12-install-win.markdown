@@ -3,7 +3,7 @@ layout: post
 title: "Windowsにインストール"
 date: 2014-08-12 21:31:50 +0900
 comments: true
-categories: 
+categories: 導入編
 ---
 LibrePlanの動作プラットフォームとしてはLinuxが指定されていますが，
 Javaアプリである以上，Linux以外でも動作可能なはずです。

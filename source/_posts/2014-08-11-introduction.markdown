@@ -3,7 +3,7 @@ layout: post
 title: "LibrePlanとは？"
 date: 2014-08-11 16:28:03 +0900
 comments: true
-categories: 
+categories: 紹介編
 ---
 
 どんなソフトウェアなのか，どんなことができるのか？  

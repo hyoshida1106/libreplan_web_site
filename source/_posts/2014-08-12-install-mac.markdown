@@ -3,7 +3,7 @@ layout: post
 title: "OS Xにインストール"
 date: 2014-08-12 21:15:25 +0900
 comments: true
-categories: 
+categories: 導入編
 ---
 LibrePlanはJavaで開発されていますから，
 基本的にJavaが動作するプラットフォームならばインストール可能なはずです。
